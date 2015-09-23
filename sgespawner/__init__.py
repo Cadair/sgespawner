@@ -1,1 +1,1 @@
-from spawner import SGESpawner
+from .spawner import SGESpawner
