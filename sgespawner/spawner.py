@@ -37,7 +37,8 @@ class SGESpawner(Spawner):
             The value of the column, or None if the job can not be found
         """
         qstat_columns = {'state': 4, 'host': 7}
-        ret = subprocess.run(self.cmd_prefix + ['qstat', '-t'], stdout=subprocess.PIPE, env=self.env)
+        ret = subprocess.run(self.cmd_prefix + ['qstat', '-t'],
+                             stdout=subprocess.PIPE, env=self.env)
 
         jobinfo = ret.stdout.decode('utf-8')
 
@@ -83,7 +84,7 @@ class SGESpawner(Spawner):
         cmd.extend(['qsub', '-b', 'y', '-j', 'y'])
         cmd.extend([sys.executable, '-m', 'jupyterhub.singleuser'])
         cmd.extend(self.get_args())
-        print(cmd)
+
         env = self.env.copy()
         self.proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE)
         r = self.proc.stdout.read().decode('utf-8')
@@ -98,14 +99,16 @@ class SGESpawner(Spawner):
             self.log.info("SGE: Job State: {}".format(state))
 
         host = self.qstat_t(jid, 'host')
-        print(host)
         host = host.split('@')[1].split('.')[0]
+        self.log.info("SGE: The single user server"
+                      " is running on: {}".format(host))
         self.user.server.ip = host
 
     @gen.coroutine
     def stop(self, now=False):
         if self.jobid:
-            subprocess.Popen(self.cmd_prefix + ['qdel', '{}'.format(self.jobid)], env=self.env)
+            subprocess.Popen(self.cmd_prefix + ['qdel', '{}'.format(self.jobid)],
+                             env=self.env)
 
     @gen.coroutine
     def poll(self):
