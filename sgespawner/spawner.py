@@ -44,6 +44,7 @@ class SGESpawner(Spawner):
 
         state = None
         for line in jobinfo.split('\n'):
+            line = line.strip()
             if line.startswith('{}'.format(jobid)):
                 state = line.split()[qstat_columns[column]]
 
@@ -81,9 +82,12 @@ class SGESpawner(Spawner):
         self.user.server.port = random_port()
 
         cmd = self.cmd_prefix.copy()
-        cmd.extend(['qsub', '-b', 'y', '-j', 'y'])
+        cmd.extend(['qsub', '-b', 'y', '-j', 'y',
+                    '-N', 'jupyterhub', '-wd', '/home/{}'.format(self.user.name)])
         cmd.extend([sys.executable, '-m', 'jupyterhub.singleuser'])
         cmd.extend(self.get_args())
+
+        print(cmd)
 
         env = self.env.copy()
         self.proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE)
