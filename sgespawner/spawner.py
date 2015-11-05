@@ -1,16 +1,23 @@
+import os
 import sys
 import time
 import subprocess
 
 from tornado import gen
 
+from traitlets import Dict
+
 from jupyterhub.utils import random_port
 from jupyterhub.spawner import Spawner
+
 
 __all__ = ['SGESpawner']
 
 
 class SGESpawner(Spawner):
+
+    sge_env = Dict({}, config=True,
+                   help="Extra SGE environment variables to pass through")
 
     def __init__(self, *args, **kwargs):
         super(SGESpawner, self).__init__(*args, **kwargs)
@@ -66,12 +73,9 @@ class SGESpawner(Spawner):
         self.jobid = None
 
     def _env_default(self):
-        env = super()._env_default()
-        env['SGE_ROOT'] = '/usr/local/sge/8.1.6'
-        env['SGE_CELL'] = 'default'
-        env['SGE_EXECD_PORT'] = '804'
-        env['SGE_QMASTER_PORT'] = '803'
-        env['SGE_CLUSTER_NAME'] = 'iceberg'
+        env = super(SGESpawner, self)._env_default()
+        env.update(self.sge_env)
+
         return env
 
     @gen.coroutine
@@ -87,9 +91,10 @@ class SGESpawner(Spawner):
         cmd.extend([sys.executable, '-m', 'jupyterhub.singleuser'])
         cmd.extend(self.get_args())
 
-        print(cmd)
+        self.log.info("SGE: CMD: {}".format(cmd))
 
         env = self.env.copy()
+
         self.proc = subprocess.Popen(cmd, env=env, stdout=subprocess.PIPE)
         r = self.proc.stdout.read().decode('utf-8')
         self.log.info("SGE: {}".format(r))
