@@ -116,8 +116,9 @@ class SGESpawner(Spawner):
     @gen.coroutine
     def stop(self, now=False):
         if self.jobid:
-            subprocess.Popen(self.cmd_prefix + ['qdel', '{}'.format(self.jobid)],
-                             env=self.env)
+            ret = subprocess.Popen(self.cmd_prefix + ['qdel', '{}'.format(self.jobid)],
+                                   env=self.env)
+            self.log.info("SGE: {}".format(ret))
 
     @gen.coroutine
     def poll(self):
